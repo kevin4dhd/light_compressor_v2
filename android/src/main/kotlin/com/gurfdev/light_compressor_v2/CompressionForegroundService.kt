@@ -86,10 +86,17 @@ class CompressionForegroundService : Service() {
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_TEXT, text)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            // Kole: desde Android 12 una app en segundo plano no puede iniciar
+            // un servicio en primer plano (ForegroundServiceStartNotAllowedException).
+            // En ese caso se comprime igual, sin notificación, en vez de cerrar la app.
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("LightCompressor", "Servicio en primer plano no permitido: ${e.message}")
             }
         }
 
