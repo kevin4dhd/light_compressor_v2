@@ -210,6 +210,9 @@ public struct LightCompressor {
     // MARK: - Constants
 
     private static let MIN_BITRATE = Float(2_000_000)
+    // Kole: piso propio del modo targetSizeBytes. Con MIN_BITRATE (2 Mbps)
+    // ningún video de más de ~2,5 min cabía en un límite de ~48 MB.
+    private static let TARGET_MIN_BITRATE = Float(300_000)
     private static let MIN_HEIGHT  = 640.0
     private static let MIN_WIDTH   = 360.0
 
@@ -584,7 +587,7 @@ public struct LightCompressor {
             let twoPassEnabled =
                 configuration.twoPass && configuration.targetSizeBytes != nil && targetSizeMet
             let targetBytes = configuration.targetSizeBytes ?? 0
-            let floor = min(Double(Self.MIN_BITRATE), Double(bitrate))
+            let floor = min(Double(Self.TARGET_MIN_BITRATE), Double(bitrate))
 
             // Log the resolved encode plan (paths reduced to base
             // names), gated on the opt-in flag.
@@ -1095,7 +1098,7 @@ public struct LightCompressor {
         // Quality floor: keep at least MIN_BITRATE but never exceed the source
         // (a sub-floor source can't be compressed further). A target below this
         // lands at the floor and reports met = false.
-        let floor = min(Double(Self.MIN_BITRATE), source)
+        let floor = min(Double(Self.TARGET_MIN_BITRATE), source)
         let met = solvedBps >= floor
         let clamped = min(max(solvedBps, floor), source)
         return (Int(clamped), met)

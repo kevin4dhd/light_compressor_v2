@@ -36,6 +36,10 @@ object Compressor {
     // 2Mbps
     private const val MIN_BITRATE = 2000000
 
+    // Kole: piso propio del modo targetSizeMb. Con MIN_BITRATE (2 Mbps) ningún
+    // video de más de ~2,5 min cabía en un límite de ~48 MB.
+    private const val TARGET_MIN_BITRATE = 300000
+
     // A two-pass run triggers a corrective second pass only when the
     // first pass overshoots the target by more than this fraction.
     private const val TWO_PASS_TOLERANCE = 0.10
@@ -290,7 +294,7 @@ object Compressor {
                 // source (a sub-floor source can't be compressed further). A
                 // target below this lands at the floor and reports
                 // targetSizeMet = false.
-                val floor = minOf(MIN_BITRATE, actualBitrate).toDouble()
+                val floor = minOf(TARGET_MIN_BITRATE, actualBitrate).toDouble()
                 targetSizeMet = solvedBps >= floor
                 solvedBps.coerceIn(floor, actualBitrate.toDouble()).toInt()
             }
@@ -349,7 +353,7 @@ object Compressor {
         val twoPassEnabled =
             configuration.twoPass && configuration.targetSizeBytes != null && targetSizeMet
         val targetBytes = configuration.targetSizeBytes ?: 0L
-        val floor = minOf(MIN_BITRATE, actualBitrate).toDouble()
+        val floor = minOf(TARGET_MIN_BITRATE, actualBitrate).toDouble()
 
         if (configuration.debugLogging) {
             Log.d(
