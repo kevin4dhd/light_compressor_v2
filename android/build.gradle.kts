@@ -1,5 +1,9 @@
+// Kole: copia local de light_compressor_v2 1.9.1. La versión publicada da por
+// hecho el Kotlin integrado de AGP 9; la app usa AGP 8, así que se aplica el
+// plugin de Kotlin y se usa srcDirs. El código de compresión no se tocó.
 plugins {
     id("com.android.library")
+    id("org.jetbrains.kotlin.android")
 }
 
 group = "com.gurfdev.light_compressor_v2"
@@ -24,7 +28,7 @@ configure<com.android.build.api.dsl.LibraryExtension> {
 
     sourceSets {
         getByName("main") {
-            java.directories.add("src/main/kotlin")
+            java.srcDirs("src/main/kotlin")
         }
     }
 
@@ -43,6 +47,11 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+    }
+}
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
