@@ -63,8 +63,10 @@ class CompressionForegroundService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "light_compressor_compression"
-        private const val CHANNEL_NAME = "Video compression"
+        // Kole: canal visible (no "silencioso"), sin sonido ni vibración, para que
+        // el usuario note que se está comprimiendo (política de Google Play).
+        private const val CHANNEL_ID = "compresion_video"
+        private const val CHANNEL_NAME = "Compresión de video"
         private const val NOTIFICATION_ID = 0xC0FFEE
         private const val DEFAULT_TITLE = "Compressing video"
         private const val DEFAULT_TEXT = "Video compression in progress…"
@@ -81,13 +83,25 @@ class CompressionForegroundService : Service() {
 
         /** Starts the foreground service with the given notification content. */
         fun start(context: Context, title: String, text: String) {
-            // Kole: Android 14 exige un tipo de servicio y "mediaProcessing" aún
-            // no existe: ahí se comprime sin servicio ni notificación.
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
             activeTitle = title
             activeText = text
             lastPercent = -1
             startWhen = System.currentTimeMillis()
+            // Kole: Android 14 exige un tipo de servicio y "mediaProcessing" aún
+            // no existe: ahí se comprime sin servicio, pero con la misma
+            // notificación de progreso (normal), para que el usuario la vea.
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                createChannelIfNeeded(context)
+                if (ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.POST_NOTIFICATIONS,
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    NotificationManagerCompat.from(context).notify(
+                        NOTIFICATION_ID, buildNotification(context, title, text, null),
+                    )
+                }
+                return
+            }
             val intent = Intent(context, CompressionForegroundService::class.java).apply {
                 putExtra(EXTRA_TITLE, title)
                 putExtra(EXTRA_TEXT, text)
@@ -140,6 +154,8 @@ class CompressionForegroundService : Service() {
             lastPercent = -1
             startWhen = 0L
             context.stopService(Intent(context, CompressionForegroundService::class.java))
+            // Kole: en Android 14 la notificación no es de un servicio.
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
         }
 
         /**
@@ -158,10 +174,12 @@ class CompressionForegroundService : Service() {
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setSmallIcon(smallIcon(context))
+                .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setShowWhen(true)
                 .setWhen(if (startWhen > 0L) startWhen else System.currentTimeMillis())
                 .setUsesChronometer(true)
@@ -180,6 +198,12 @@ class CompressionForegroundService : Service() {
                 builder.setSubText("$p%")
             }
             return builder.build()
+        }
+
+        /** Kole: el ícono de notificaciones de la app (drawable/logo_notificacion). */
+        private fun smallIcon(context: Context): Int {
+            val id = context.resources.getIdentifier("logo_notificacion", "drawable", context.packageName)
+            return if (id != 0) id else android.R.drawable.stat_sys_upload
         }
 
         private fun pendingFlags(): Int =
@@ -210,13 +234,19 @@ class CompressionForegroundService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val manager =
                     context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                // Kole: el canal viejo era "silencioso" (IMPORTANCE_LOW).
+                manager.deleteNotificationChannel("light_compressor_compression")
                 if (manager.getNotificationChannel(CHANNEL_ID) == null) {
                     manager.createNotificationChannel(
                         NotificationChannel(
                             CHANNEL_ID,
                             CHANNEL_NAME,
-                            NotificationManager.IMPORTANCE_LOW,
-                        )
+                            NotificationManager.IMPORTANCE_DEFAULT,
+                        ).apply {
+                            setSound(null, null)
+                            enableVibration(false)
+                            setShowBadge(false)
+                        }
                     )
                 }
             }

@@ -42,13 +42,21 @@ class BackgroundConfig {
   /// The notification fields are used on Android only; other platforms ignore
   /// them. Sensible English defaults are provided so the simplest opt-in is
   /// `const BackgroundConfig()`.
-  const BackgroundConfig({this.notificationTitle = 'Compressing video'});
+  const BackgroundConfig({
+    this.notificationTitle = 'Compressing video',
+    this.notificationText,
+  });
 
   /// Android only — the title shown on the foreground-service notification.
   final String notificationTitle;
 
+  /// Android only — the body text of the notification (defaults to the
+  /// output file name).
+  final String? notificationText;
+
   /// Serialises this configuration into the map sent across the method channel.
   Map<String, dynamic> toMap() => <String, dynamic>{
         'notificationTitle': notificationTitle,
+        if (notificationText != null) 'notificationText': notificationText,
       };
 }

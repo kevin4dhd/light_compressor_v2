@@ -217,7 +217,7 @@ class LightCompressorPlugin : FlutterPlugin, MethodCallHandler,
         }
         if (background != null) {
             CompressionForegroundService.start(
-                applicationContext, background.title, videoName,
+                applicationContext, background.title, background.text ?: videoName,
             )
         }
         VideoCompressor.start(
@@ -258,7 +258,7 @@ class LightCompressorPlugin : FlutterPlugin, MethodCallHandler,
                         ))
                         if (background != null) {
                             CompressionForegroundService.updateProgress(
-                                applicationContext, progress.percent.toInt(), videoName,
+                                applicationContext, progress.percent.toInt(), background.text ?: videoName,
                             )
                         }
                     }
@@ -535,6 +535,8 @@ class LightCompressorPlugin : FlutterPlugin, MethodCallHandler,
     /** Notification content for the Android foreground service. */
     private data class BackgroundParams(
         val title: String,
+        // Kole: texto fijo de la notificación (si no, el nombre del archivo).
+        val text: String?,
     )
 
     /**
@@ -546,6 +548,7 @@ class LightCompressorPlugin : FlutterPlugin, MethodCallHandler,
         val map = call.argument<Map<String, Any?>>("background") ?: return null
         return BackgroundParams(
             title = (map["notificationTitle"] as? String) ?: "Compressing video",
+            text = map["notificationText"] as? String,
         )
     }
 
