@@ -19,7 +19,7 @@ rootProject.allprojects {
 configure<com.android.build.api.dsl.LibraryExtension> {
 
     namespace = "com.gurfdev.light_compressor_v2"
-    compileSdk = 34
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
