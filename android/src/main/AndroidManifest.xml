@@ -5,14 +5,16 @@
          BackgroundConfig. Declared here so host apps inherit them automatically
          through manifest merging. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Kole: transcodificar video es "mediaProcessing" (Android 15+), no
+         "dataSync": Google Play rechaza la declaración si se usa dataSync. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
         <service
             android:name=".CompressionForegroundService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="mediaProcessing" />
         <receiver
             android:name=".CompressionCancelReceiver"
             android:exported="false" />

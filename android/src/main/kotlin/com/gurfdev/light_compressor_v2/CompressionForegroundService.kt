@@ -44,11 +44,14 @@ class CompressionForegroundService : Service() {
         // Indeterminate bar until the first progress update arrives.
         val notification = buildNotification(this, title, text, null)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        // Kole: el tipo "mediaProcessing" existe desde Android 15. Antes de
+        // Android 14 el tipo no se exige y basta el del manifiesto; en Android 14
+        // no se inicia el servicio (ver start()).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             startForeground(
                 NOTIFICATION_ID,
                 notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROCESSING,
             )
         } else {
             startForeground(NOTIFICATION_ID, notification)
@@ -78,6 +81,9 @@ class CompressionForegroundService : Service() {
 
         /** Starts the foreground service with the given notification content. */
         fun start(context: Context, title: String, text: String) {
+            // Kole: Android 14 exige un tipo de servicio y "mediaProcessing" aún
+            // no existe: ahí se comprime sin servicio ni notificación.
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
             activeTitle = title
             activeText = text
             lastPercent = -1
